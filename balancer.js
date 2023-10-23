@@ -8,6 +8,7 @@ const { URL, BASE_PORT, N, currentPort = 25565 } = process.env;
 
 app.get("/list", async (req, res) => {
   const name = req.query.name??"";
+  // console.log(`Se recibio el request ${name}`);
   const hash = createHash("sha256");
   hash.update(req.ip + new Date().getTime().toString());
   const hash_digest = hash.digest("hex")
