@@ -5,7 +5,7 @@ const axios = require("axios");
 router.get("/list", async (req, res) => {
   const name = req.query.name;
   if (!name) {
-    res.send("Name is required");
+    res.status(404).send({ message: "Name is required" });
     return;
   }
   try {
