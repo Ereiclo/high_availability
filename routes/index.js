@@ -18,8 +18,8 @@ router.get("/list", async (req, res) => {
       return;
     }
 
-    console.log(response.data);
-    res.send("termino");
+    // console.log(response.data);
+    res.send(response.data);
   } catch (error) {
     console.log(error.response.status);
     console.log("fallo");
