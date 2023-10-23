@@ -10,7 +10,11 @@ app.get("/list", async (req, res) => {
   const name = req.query.name??"";
   const hash = createHash("sha256");
   hash.update(req.ip + new Date().getTime().toString());
-  const finalOffset = parseInt(hash.digest("hex"), 16) % N;
+  const hash_digest = hash.digest("hex")
+  const finalOffset = parseInt(hash_digest, 16) % N;
+  // console.log(hash)
+  // console.log(hash_digest)
+  // console.log(finalOffset)
   const serverURL = `${URL}:${parseInt(BASE_PORT) + finalOffset}`;
 
   console.log(`Se eligio el server ${serverURL}`);
@@ -19,6 +23,11 @@ app.get("/list", async (req, res) => {
     // console.log(response.data);
     res.send(response.data);
   } catch (error) {
+    //console.log(error)
+    if (error?.code === "ECONNRESET" || error?.code === "ECONNREFUSED") {
+      res.status(503).send({ message: "Server is down" });
+      return;
+    }
     // console.log(error);
     res.status(404).send(error.response.data);
   }
