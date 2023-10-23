@@ -1,20 +1,32 @@
 require("dotenv").config();
+const { spawn } = require("child_process");
+const path = require("path");
 
-const express = require("express");
-const { createHash } = require("crypto");
-const app = express();
-const basePort = process.env.basePort;
-const N = process.env.N;
-const currentPort = process.env.PORT || 5000;
-console.log(process.env.PORT);
+const { BASE_PORT, N } = process.env;
+const servers = [];
 
-app.get("/listen", async (req, res) => {
-  const name = req.query.name;
-  const hash = createHash("sha256");
-  hash.update(req.ip);
-  console.log(parseInt(hash.digest('hex'),16) % N);
+const decoder = new TextDecoder();
+
+for (let i = 0; i < N; ++i) {
+  const port = (parseInt(BASE_PORT) + i).toString();
+  // console.log(port)
+  const currentServer = spawn(
+    "node",
+    [`${path.join(__dirname, "./bin/www")}`],
+    {
+      // env: { PORT: port },
+      env: { ...process.env, PORT: port },
+    }
+  );
+  servers.push(currentServer);
+  currentServer.stdout.on("data", (data) =>
+    console.log(`(server ${i})`, decoder.decode(data).slice(0, -1))
+  );
+  // PORT=${basePort + i}
+}
+
+process.on("SIGINT", function () {
+  servers.forEach((server) => server.kill("SIGINT"));
 });
 
-app.listen(currentPort, () => {
-    console.log('escuchando en', currentPort)
-})
+// setInterval(() => console.log(3), 1000)
