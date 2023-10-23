@@ -12,6 +12,7 @@ const client = createClient({
 router.get("/list", async (req, res) => {
   const name = req.query.name;
   res.status(404).send({ message: "Name is required" });
+  return;
 
   if (!name) {
     res.status(404).send({ message: "Name is required" });
