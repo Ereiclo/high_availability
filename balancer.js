@@ -6,9 +6,10 @@ const { createHash } = require("crypto");
 const app = express();
 const { URL, BASE_PORT, N, currentPort = 25565 } = process.env;
 
-const maxRequests = 100000;
+// const maxRequests = 80000;
 
-const maxRequestsForNode = maxRequests / N;
+// const maxRequestsForNode = maxRequests / N;
+const maxRequestsForNode = 200;
 const actualRequestsByNode = new Array(parseInt(N)).fill(0);
 
 function chooseNextAvailableNode() {
@@ -29,13 +30,13 @@ app.get("/list", async (req, res) => {
   const name = req.query.name ?? "";
   const finalOffset = chooseNextAvailableNode();
   if (finalOffset === -1) {
-    res.status(503).send({ message: "Server is down" });
+    res.status(503).send({ message: "Server is down 2" });
     return;
   }
 
   const serverURL = `${URL}:${parseInt(BASE_PORT) + finalOffset}`;
   console.log(`Se eligio el server ${serverURL}`);
-  console.log(actualRequestsByNode, finalOffset);
+  console.log(actualRequestsByNode);//, finalOffset);
 
   try {
     actualRequestsByNode[finalOffset]++;
@@ -44,10 +45,10 @@ app.get("/list", async (req, res) => {
     actualRequestsByNode[finalOffset]--;
     // console.log("ke", actualRequestsByNode[finalOffset]);
   } catch (error) {
-    //console.log(error)
+    // console.log(error)
     actualRequestsByNode[finalOffset]--;
     if (error?.code === "ECONNRESET" || error?.code === "ECONNREFUSED") {
-      res.status(503).send({ message: "Server is down" });
+      res.status(503).send({ message: "Server is down", error });
       return;
     }
     // console.log(error);

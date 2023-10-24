@@ -9,6 +9,8 @@ const client = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+const cache_interno = []
+
 router.get("/list", async (req, res) => {
   const name = req.query.name;
   // console.log(name);
@@ -19,6 +21,11 @@ router.get("/list", async (req, res) => {
     return;
   }
   try {
+    if(cache_interno.find((element) => element.name == name)){
+      res.send(cache_interno.find((element) => element.name == name).content);
+      return;
+    }
+
     //ver base datos
     let result = await client.execute({
       sql: `select count(1) from "Data" where name = :name`,
@@ -27,7 +34,7 @@ router.get("/list", async (req, res) => {
       },
     });
     let count = result.rows[0]["count (1)"];
-
+    let nuevo_elemento = null;
     //en caso no exista, se busca en la api
 
     if (count == 0) {
@@ -40,12 +47,20 @@ router.get("/list", async (req, res) => {
         return;
       }
       //si se encuentra se sube a la base de datos
+
+      nuevo_elemento = {
+        name: name,
+        content: JSON.stringify(response.data),
+      }
+      
+      cache_interno.push(nuevo_elemento)
+      if(cache_interno.length > 10){
+        cache_interno.shift()
+      }
+
       result = client.execute({
         sql: `insert into "Data" values(:name, :content)`,
-        args: {
-          name: name,
-          content: JSON.stringify(response.data),
-        },
+        args: nuevo_elemento,
       });
 
       res.send(response.data);
@@ -58,15 +73,26 @@ router.get("/list", async (req, res) => {
         },
       });
       let response_data = result.rows[0]["content"];
+
+      nuevo_elemento = {
+        name: name,
+        content: response_data,
+      }
+      cache_interno.push(nuevo_elemento)
+      if(cache_interno.length > 10){
+        cache_interno.shift()
+      }
+
       res.send(JSON.parse(response_data));
-      return;
+      // return;
     }
 
     //si no encuentra un 200 no se encuentra
 
     // console.log(response.data);
   } catch (error) {
-    console.log(error.response.status);
+    // console.log(error)
+    // console.log(error.response.status);
     console.log("fallo");
     res.status(200).send("No se encontro el anime");
   }
