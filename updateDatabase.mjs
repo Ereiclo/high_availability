@@ -21,7 +21,7 @@ async function submitName(names) {
     });
 
     console.log(currentName, "actualizado");
-    console.log(response.data);
+    // console.log(response.data);
 
     setTimeout(() => submitName(nextNames), 1500);
   }
