@@ -10,6 +10,7 @@ const client = createClient({
 });
 
 const cache_interno = []
+const CACHE_MAX_SIZE = 10
 
 router.get("/list", async (req, res) => {
   const name = req.query.name;
@@ -54,11 +55,11 @@ router.get("/list", async (req, res) => {
       }
       
       cache_interno.push(nuevo_elemento)
-      if(cache_interno.length > 10){
+      if(cache_interno.length > CACHE_MAX_SIZE){
         cache_interno.shift()
       }
 
-      result = client.execute({
+      result = await client.execute({
         sql: `insert into "Data" values(:name, :content)`,
         args: nuevo_elemento,
       });
@@ -79,7 +80,7 @@ router.get("/list", async (req, res) => {
         content: response_data,
       }
       cache_interno.push(nuevo_elemento)
-      if(cache_interno.length > 10){
+      if(cache_interno.length > CACHE_MAX_SIZE){
         cache_interno.shift()
       }
 
