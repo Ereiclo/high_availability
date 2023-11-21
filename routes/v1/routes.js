@@ -78,6 +78,7 @@ router.get("/list/:name", getMIMETypes, async (req, res) => {
     }
 
     let data = null;
+    let insertData = false;
 
     if (!(await existsAnime(name))) {
       const url = `https://api.jikan.moe/v4/anime?q=${name}`;
@@ -85,12 +86,9 @@ router.get("/list/:name", getMIMETypes, async (req, res) => {
 
       data = response.data.data;
 
-      //si se encuentra se sube a la base de datos
+      insertData = true;
 
-      await client.execute({
-        sql: `insert into "Data" values(:name, :value)`,
-        args: { name, value: JSON.stringify(data) },
-      });
+      //si se encuentra se sube a la base de datos
     } else {
       const result = await client.execute({
         sql: `select value from "Data" where name = :name`,
@@ -115,22 +113,42 @@ router.get("/list/:name", getMIMETypes, async (req, res) => {
       value: data,
       requestsNumber: 1,
     };
+    const cacheElem = cache_interno.find((element) => element.name == name);
 
-    if (cache_interno.length >= CACHE_MAX_SIZE) cache_interno = removeLRU();
+    if (cacheElem) {
+      cacheElem.requestsNumber++;
+    } else {
+      if (cache_interno.length >= CACHE_MAX_SIZE) cache_interno = removeLRU();
 
-    cache_interno.push(newElement);
+      cache_interno.push(newElement);
+    }
+
+    if (insertData)
+      await client.execute({
+        sql: `insert or replace into "Data" values(:name, :value)`,
+        args: { name, value: JSON.stringify(data) },
+      });
 
     //si no encuentra un 200 no se encuentra
   } catch (error) {
     console.log("fallo: ", error);
 
+    if (error.response?.status == 429) {
+      res.status(503).send({ message: "Server is down" });
+      return;
+    }
+
     res.status(404).send("No se encontro el anime");
 
-    if (!(await existsAnime(name)))
-      await client.execute({
-        sql: `insert into "Data" values(:name, :value)`,
-        args: { name, value: "" },
-      });
+    try {
+      if (!(await existsAnime(name)))
+        await client.execute({
+          sql: `insert or replace into "Data" values(:name, :value)`,
+          args: { name, value: "" },
+        });
+    } catch (error) {
+      console.log("no se pudo subir");
+    }
   }
 });
 

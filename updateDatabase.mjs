@@ -14,9 +14,8 @@ async function submitName(names) {
       content: JSON.stringify(response.data),
     };
 
-
     await client.execute({
-      sql: `update "Data" set content=:content where name=:name`,
+      sql: `update "Data" set value=:content where name=:name`,
       args: nuevo_elemento,
     });
 
