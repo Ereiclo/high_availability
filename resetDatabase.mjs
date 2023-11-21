@@ -6,6 +6,6 @@ const client = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-await client.execute(
-       `delete from  "Data" where true`,
-    );
+await client.execute(`delete from  "Data" where true`);
+
+console.log(await client.execute(`select * from "Data"`));
