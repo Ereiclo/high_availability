@@ -2,7 +2,7 @@
 
 - Eric Bracamonte 
 
-![](./arquitectura.jpg)
+![](./arquitectura.png)
 
 # Environment 
 
